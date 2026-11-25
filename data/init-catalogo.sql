@@ -1,0 +1,1 @@
+SELECT * FROM inventario WHERE sede_id = 1;
