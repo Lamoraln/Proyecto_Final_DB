@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es-CO">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ventas y pagos | DistribuRed</title>
+    <link rel="stylesheet" href="./src/app/styles.css">
+    <link rel="stylesheet" href="./src/app/navegacion.css">
+    <link rel="stylesheet" href="./src/app/acceso.css">
+    <script type="module" src="./src/app/navegacion.js"></script>
+</head>
+
+<body class="layout-navegacion">
+    <aside class="sidebar" id="barra-lateral" hidden></aside>
+
+    <div class="workspace">
+        <header class="top">
+            <span>Operaciones <b>/</b> Ventas y pagos</span>
+            <span class="avatar" aria-label="Perfil de demostración">DR</span>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div>
+                    <h1>Ventas y pagos</h1>
+                    <p>Consulta los pedidos, los abonos confirmados y los saldos por cobrar.</p>
+                </div>
+            </section>
+
+            <section class="panel transferencias" aria-labelledby="titulo-pedidos">
+                <div class="panel-title">
+                    <h2 id="titulo-pedidos">Pedidos de venta</h2>
+                    <span id="conteo" role="status">Cargando pedidos…</span>
+                </div>
+
+                <form class="filters" id="filtros-ventas">
+                    <label>Sede comercial
+                        <select id="sede-venta">
+                            <option value="">Todas las sedes</option>
+                        </select>
+                    </label>
+
+                    <label>Estado del pedido
+                        <select id="estado-venta">
+                            <option value="">Todos los estados</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="CONFIRMADO">Confirmado</option>
+                            <option value="COMPLETADO">Completado</option>
+                            <option value="CANCELADO">Cancelado</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span><input type="checkbox" id="solo-saldo"> Solo con saldo pendiente</span>
+                    </label>
+
+                    <button type="reset">Limpiar filtros</button>
+                </form>
+
+                <div id="pedidos"></div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

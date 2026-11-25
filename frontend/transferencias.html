@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es-CO">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transferencias | DistribuRed</title>
+    <link rel="stylesheet" href="./src/app/styles.css">
+    <link rel="stylesheet" href="./src/app/navegacion.css">
+    <link rel="stylesheet" href="./src/app/acceso.css">
+    <script type="module" src="./src/app/navegacion.js"></script>
+</head>
+
+<body class="layout-navegacion">
+    <aside class="sidebar" id="barra-lateral" hidden></aside>
+        <a class="brand" href="./">
+            <span class="logo" aria-hidden="true">◆</span> DistribuRed
+        </a>
+
+        <div class="demo"><i></i> Datos de demostración</div>
+    </aside>
+
+    <div class="workspace">
+        <header class="top">
+            <span>Operaciones <b>/</b> Transferencias</span>
+            <span class="avatar" aria-label="Perfil de demostración">DR</span>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div>
+                    <h1>Transferencias entre almacenes</h1>
+                    <p>Consulta los traslados y verifica las cantidades recibidas.</p>
+                </div>
+            </section>
+
+            <section class="panel transferencias" aria-labelledby="titulo-traslados">
+                <div class="panel-title">
+                    <h2 id="titulo-traslados">Traslados</h2>
+                    <span id="conteo" role="status"></span>
+                </div>
+
+                <div class="filters">
+                    <label>Estado
+                        <select id="estado">
+                            <option value="">Todos los estados</option>
+                            <option value="EN_TRANSITO">En tránsito</option>
+                            <option value="RECIBIDA">Recibida</option>
+                        </select>
+                    </label>
+
+                    <label>Sede de destino
+                        <select id="destino">
+                            <option value="">Todas las sedes</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="traslados"></div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es-CO">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compras | DistribuRed</title>
+    <link rel="stylesheet" href="./src/app/styles.css">
+    <link rel="stylesheet" href="./src/app/navegacion.css">
+    <link rel="stylesheet" href="./src/app/acceso.css">
+    <script type="module" src="./src/app/navegacion.js"></script>
+</head>
+
+<body class="layout-navegacion">
+    <aside class="sidebar" id="barra-lateral" hidden></aside>
+
+    <div class="workspace">
+        <header class="top">
+            <span>Operaciones <b>/</b> Compras</span>
+            <span class="avatar" aria-label="Perfil de demostración">DR</span>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div>
+                    <h1>Compras y recepciones</h1>
+                    <p>Consulta qué llegó a cada almacén y qué sigue pendiente.</p>
+                </div>
+            </section>
+
+            <section class="panel transferencias" aria-labelledby="titulo-ordenes">
+                <div class="panel-title">
+                    <h2 id="titulo-ordenes">Órdenes de compra</h2>
+                    <span id="conteo" role="status">Cargando órdenes…</span>
+                </div>
+
+                <div class="filters">
+                    <label>Sede de destino
+                        <select id="sede-compra">
+                            <option value="">Todas las sedes</option>
+                        </select>
+                    </label>
+
+                    <label>Estado
+                        <select id="estado-compra">
+                            <option value="">Todos los estados</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="PARCIAL">Parcial</option>
+                            <option value="RECIBIDA">Recibida</option>
+                            <option value="CANCELADA">Cancelada</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="ordenes"></div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

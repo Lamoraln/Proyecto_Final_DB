@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es-CO">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Acceso de demostración | DistribuRed</title>
+    <link rel="stylesheet" href="./src/app/styles.css">
+    <link rel="stylesheet" href="./src/app/acceso.css">
+    <script type="module" src="./src/app/login.js"></script>
+</head>
+
+<body class="pagina-login">
+    <main class="login-panel">
+        <span class="logo" aria-hidden="true">◆</span>
+        <h1>DistribuRed</h1>
+        <p>Elige una cuenta de demostración.</p>
+        <form id="login-form">
+            <label for="cuenta-demo">Perfil</label>
+            <select id="cuenta-demo" required>
+                <option value="">Selecciona un perfil</option>
+            </select>
+            <button type="submit">Entrar</button>
+            <p id="login-mensaje" role="alert"></p>
+        </form>
+    </main>
+</body>
+
+</html>
