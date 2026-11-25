@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Resumen multisede | DistribuRed</title>
-    <script type="module" src="./src/features/reportes/resumen.js"></script>
     <link rel="stylesheet" href="./src/app/styles.css">
     <link rel="stylesheet" href="./src/app/navegacion.css">
     <link rel="stylesheet" href="./src/app/acceso.css">
@@ -14,28 +13,13 @@
 
 <body class="layout-navegacion">
     <aside class="sidebar" id="barra-lateral" hidden></aside>
-        <a class="brand" href="./">
-            <span class="logo" aria-hidden="true">◆</span> DistribuRed
-        </a>
-
-
-        <div class="demo"><i></i> Datos de demostración</div>
-    </aside>
 
     <div class="workspace">
         <header class="top">
             <span>Operaciones <b>/</b> Resumen multisede</span>
             <span class="avatar" aria-label="Perfil de demostración">DR</span>
         </header>
-    <section class="panel" id="consolidado-corporativo" aria-labelledby="titulo-consolidado">
-        <div class="panel-title">
-            <h2 id="titulo-consolidado">Consolidado operativo por sede</h2>
-        </div>
-        <div id="tabla-consolidado">
-            <p class="empty" role="status">Cargando consolidado…</p>
-        </div>
-    </section>
-        <main>
+        <main hidden>
             <section class="hero">
                 <div>
                     <h1>Resumen multisede</h1>
@@ -66,6 +50,14 @@
                         </thead>
                         <tbody id="filas-sedes"></tbody>
                     </table>
+                </div>
+            </section>
+            <section class="panel" id="consolidado-corporativo" aria-labelledby="titulo-consolidado">
+                <div class="panel-title">
+                    <h2 id="titulo-consolidado">Consolidado operativo por sede</h2>
+                </div>
+                <div id="tabla-consolidado">
+                    <p class="empty" role="status">Cargando consolidado…</p>
                 </div>
             </section>
         </main>

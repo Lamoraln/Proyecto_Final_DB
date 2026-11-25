@@ -1,12 +1,11 @@
-import { sedes } from '../inventarios/datos.js';
 import { listarTransferencias } from './datos.js';
-import { sedes, todasLasSedes } from '../inventarios/datos.js';
+import { todasLasSedes } from '../inventarios/datos.js';
 
 const filtroEstado = document.querySelector('#estado');
 const filtroDestino = document.querySelector('#destino');
 const listado = document.querySelector('#traslados');
 const conteo = document.querySelector('#conteo');
-const sedesPorId = new Map(sedes.map(sede => [sede.id, sede]));
+const sedesPorId = new Map(todasLasSedes.map(sede => [sede.id, sede]));
 
 const estados = {
   EN_TRANSITO: 'En tránsito',
@@ -121,10 +120,12 @@ function renderizar(transferencias) {
   listado.replaceChildren(...visibles.map(crearTraslado));
 }
 
-filtroDestino.append(...sedes.map(sede => new Option(sede.nombre, sede.id)));
-
 try {
   const transferencias = await listarTransferencias();
+  const destinos = new Set(transferencias.map(traslado => traslado.destino));
+  for (const sede of todasLasSedes) {
+    if (destinos.has(sede.id)) filtroDestino.add(new Option(sede.nombre, sede.id));
+  }
 
   filtroEstado.addEventListener('change', () => renderizar(transferencias));
   filtroDestino.addEventListener('change', () => renderizar(transferencias));

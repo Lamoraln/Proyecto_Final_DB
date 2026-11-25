@@ -1,3 +1,4 @@
+import { permitePantalla, sesionActual } from '../../app/sesion.js';
 import { listarInventario, sedes } from '../inventarios/datos.js';
 import { clasificar } from '../inventarios/estados.js';
 
@@ -5,6 +6,7 @@ const indicadores = document.querySelector('#indicadores');
 const filas = document.querySelector('#filas-sedes');
 const estadoResumen = document.querySelector('#estado-resumen');
 const formato = new Intl.NumberFormat('es-CO');
+const permiteDetalle = permitePantalla(sesionActual(), 'index.html');
 
 function consolidar(registros) {
   const totales = { unidades: 0, bajo: 0, agotado: 0, ausente: 0 };
@@ -55,13 +57,18 @@ function crearFila({ sede, resumen }) {
   }
 
   const detalle = document.createElement('td');
+  fila.append(detalle);
+  if (!permiteDetalle) {
+    detalle.textContent = '—';
+    return fila;
+  }
+
   const enlace = document.createElement('a');
   enlace.className = 'enlace-detalle';
-  enlace.href = './?sede=' + encodeURIComponent(sede.id);
+  enlace.href = './index.html?sede=' + encodeURIComponent(sede.id);
   enlace.textContent = 'Ver inventario →';
   enlace.setAttribute('aria-label', 'Ver inventario de ' + sede.nombre);
   detalle.append(enlace);
-  fila.append(detalle);
 
   return fila;
 }
