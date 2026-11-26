@@ -75,6 +75,7 @@ function crearFila({ sede, resumen }) {
 
 async function cargarResumen() {
   try {
+    // Reportes ya cruza las bases; acá ordenamos los datos y armamos la pantalla.
     const [inventario, ausencias, sedes] = await Promise.all([
       consultar('reportes/inventario'), consultar('reportes/ausencias'),
       consultar('reportes/consolidado'),

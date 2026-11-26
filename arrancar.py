@@ -23,6 +23,7 @@ def main():
     parser.add_argument("servicio", choices=("todos", *SERVICIOS), nargs="?", default="todos")
     opcion = parser.parse_args().servicio
     grupo = SERVICIOS.items() if opcion == "todos" else [(opcion, SERVICIOS[opcion])]
+    # Así cada API encuentra comun.py aunque se ejecute desde su propia carpeta.
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(RAIZ / "services"), env.get("PYTHONPATH")]))
     procesos = {}
@@ -33,6 +34,7 @@ def main():
                  "--port", str(puerto), "--app-dir", str(RAIZ / "services" / carpeta)],
                 cwd=RAIZ, env=env,
             )
+        # Si un servicio se cae, los demás siguen corriendo.
         while procesos:
             for nombre, proceso in list(procesos.items()):
                 codigo = proceso.poll()
@@ -42,6 +44,7 @@ def main():
                     if opcion != "todos":
                         return codigo
             time.sleep(0.3)
+    # Con Ctrl+C salimos del ciclo y cerramos los procesos que quedan.
     except KeyboardInterrupt:
         pass
     finally:

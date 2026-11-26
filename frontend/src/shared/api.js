@@ -1,6 +1,7 @@
 import { cerrarSesion, tokenActual } from '../app/sesion.js';
 
 export async function consultar(ruta, opciones = {}) {
+  // Las llamadas pasan por la misma pasarela y llevan el token cuando hay sesión.
   const token = tokenActual();
   const respuesta = await fetch('/api/' + ruta, {
     ...opciones,
@@ -20,6 +21,7 @@ export async function consultar(ruta, opciones = {}) {
 }
 
 export async function indiceCatalogo(recurso, clave) {
+  // Si Catálogo no responde, las pantallas pueden mostrar identificadores como respaldo.
   try {
     return new Map((await consultar('catalogo/' + recurso)).map(item => [item[clave], item]));
   } catch (error) {

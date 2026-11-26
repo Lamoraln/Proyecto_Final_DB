@@ -8,6 +8,7 @@ app = servicio("Reportes Corporativos", db)
 lectura = permitir(*GLOBAL)
 
 
+# Los totales ya vienen calculados por las vistas de PostgreSQL.
 @app.get("/api/reportes/consolidado")
 def consolidado(_=Depends(lectura)):
     return db.consultar("SELECT * FROM reportes.vista_reporte_corporativo ORDER BY id_sede")
@@ -23,6 +24,7 @@ def ausencias(_=Depends(lectura)):
     return db.consultar("SELECT id_sede, count(*) AS ausentes FROM reportes.vista_productos_sin_inventario GROUP BY id_sede")
 
 
+# Esta lista limita qué vistas se pueden pedir desde la web.
 VISTAS = frozenset({
     "inventario_por_sede", "alertas_reabastecimiento", "productos_sin_inventario",
     "ventas_mensuales_por_sede", "pedidos_pendientes", "saldos_pendientes",
@@ -40,4 +42,5 @@ def ver_vista(nombre: str, _=Depends(lectura)):
     )
     with db.conexion() as conexion:
         cursor = conexion.execute(consulta)
+        # Mandamos los nombres de las columnas para poder dibujar incluso una tabla vacía.
         return {"columnas": [c.name for c in cursor.description], "filas": cursor.fetchall()}

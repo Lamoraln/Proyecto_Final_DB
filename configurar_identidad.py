@@ -18,6 +18,7 @@ def claves():
     carpeta.mkdir(mode=0o700, exist_ok=True)
     privada = carpeta / "privada.pem"
     publica = carpeta / "publica.pem"
+    # Reutilizamos la clave privada para conservar la misma firma entre arranques.
     if privada.exists():
         clave = serialization.load_pem_private_key(privada.read_bytes(), password=None)
     else:
@@ -28,6 +29,7 @@ def claves():
                 serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
                 serialization.NoEncryption(),
             ))
+    # Las otras API usan esta clave para verificar la firma de Identidad.
     publica.write_bytes(clave.public_key().public_bytes(
         serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo,
     ))
@@ -43,6 +45,7 @@ def contrasena(usuario):
         raise SystemExit("Usa entre 12 y 256 caracteres.")
     if nueva != getpass.getpass("Confirma la contraseña web: "):
         raise SystemExit("Las contraseñas no coinciden.")
+    # Usamos el acceso de PostgreSQL para guardar el hash de la nueva clave web.
     with psycopg.connect(
         host=config["DB_HOST"], port=config.get("DB_PORT") or "5432",
         dbname=config.get("DB_NAME") or "db_identidad",

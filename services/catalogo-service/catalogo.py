@@ -11,6 +11,7 @@ def verificar_conexion(_=Depends(permitir("ADMINISTRADOR"))):
     return consultar("SELECT current_database() AS base")[0]
 
 
+# Son datos de referencia que también usan las demás pantallas.
 @app.get("/api/catalogo/sedes")
 def listar_sedes(_=Depends(sesion)):
     return consultar("""
@@ -52,6 +53,7 @@ def listar_categorias(_=Depends(sesion)):
     """)
 
 
+# Proveedores y clientes tienen permisos más específicos que el catálogo básico.
 @app.get("/api/catalogo/proveedores")
 def listar_proveedores(_=Depends(permitir("ADMINISTRADOR", "RESP_COMPRAS"))):
     return consultar("""

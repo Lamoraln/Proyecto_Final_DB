@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def configuracion(archivo):
+    # Cada servicio lee su .env. Las variables del proceso tienen prioridad.
     return {**dotenv_values(Path(archivo).with_name(".env")), **os.environ}
 
 
@@ -30,6 +31,7 @@ class BaseDatos:
         self.config = configuracion(archivo)
         self.base = base
 
+    # La conexión se cierra al salir; si falla la consulta, se revierte la transacción.
     @contextmanager
     def conexion(self):
         try:
@@ -63,6 +65,7 @@ class BaseDatos:
 def servicio(nombre, db):
     app = FastAPI(title=f"DistribuRed · {nombre}")
 
+    # Probamos la base con algo sencillo, sin depender de los otros servicios.
     @app.get("/salud")
     def salud():
         db.consultar("SELECT 1")
@@ -79,6 +82,7 @@ class Sesion:
     token: str
 
     def alcance(self, sede=None):
+        # Los roles globales pueden consultar todas las sedes o elegir una.
         if self.rol in GLOBAL:
             return sede
         if sede is not None and sede != self.sede:
@@ -93,6 +97,7 @@ def clave_publica():
 def sesion(credenciales: HTTPAuthorizationCredentials | None = Depends(bearer)):
     if credenciales:
         try:
+            # La clave pública permite verificar el token sin llamar a Identidad.
             datos = jwt.decode(
                 credenciales.credentials, clave_publica(),
                 algorithms=["EdDSA"], issuer=EMISOR, audience=AUDIENCIA,
@@ -108,6 +113,7 @@ def sesion(credenciales: HTTPAuthorizationCredentials | None = Depends(bearer)):
 
 
 def permitir(*roles):
+    # Esta comprobación se ejecuta antes de entrar a la ruta de la API.
     def validar(cuenta: Sesion = Depends(sesion)):
         if cuenta.rol not in roles:
             raise HTTPException(403, "Tu rol no tiene acceso a esta operación.")
@@ -116,6 +122,7 @@ def permitir(*roles):
 
 
 def almacenes_autorizados(cuenta, config):
+    # Compras y Transferencias usan IDs de almacén; Catálogo sabe a qué sede pertenecen.
     sede = cuenta.alcance()
     if sede is None:
         return None

@@ -11,6 +11,7 @@ escritura = permitir("ADMINISTRADOR", "RESP_INVENTARIO")
 
 @app.get("/api/inventarios")
 def listar_inventario(sede_id: int = Query(gt=0), cuenta=Depends(lectura)):
+    # La API valida la sede aunque alguien cambie el ID en la URL.
     filas = db.consultar("""
         SELECT id_sede, id_almacen, id_producto,
                existencia_actual AS existencia, stock_minimo AS minimo
@@ -28,6 +29,7 @@ class Minimo(BaseModel):
 @app.patch("/api/inventarios/{sede}/{almacen}/{producto}/minimo")
 def actualizar_minimo(sede: int, almacen: int, producto: int, datos: Minimo,
                       cuenta=Depends(escritura)):
+    # La edición del mínimo solo se habilita con la opción del servicio.
     if db.config.get("INVENTARIO_ESCRITURA") != "1":
         raise HTTPException(403, "La escritura de inventario está deshabilitada.")
     rows = db.consultar("""
@@ -42,6 +44,7 @@ def actualizar_minimo(sede: int, almacen: int, producto: int, datos: Minimo,
 
 @app.get("/api/inventarios/transferencias")
 def transferencias(cuenta=Depends(lectura)):
+    # El traslado se puede consultar si uno de sus extremos queda dentro del alcance.
     almacenes = almacenes_autorizados(cuenta, db.config)
     return db.consultar("""
         SELECT t.id_transferencia, t.id_almacen_origen, t.id_almacen_destino,

@@ -9,7 +9,9 @@ lectura = permitir(*GLOBAL, "VENDEDOR")
 
 @app.get("/api/ventas/pedidos")
 def pedidos(sede_id: int | None = Query(default=None, gt=0), cuenta=Depends(lectura)):
+    # Para un vendedor, la sede del token manda sobre el filtro de la web.
     sede = cuenta.alcance(sede_id)
+    # Agrupamos productos y pagos por separado para evitar filas duplicadas.
     return db.consultar("""
         SELECT v.id_sede, v.id_pedido, v.id_cliente, v.fecha_pedido::date, v.estado,
                v.total_registrado, COALESCE(d.lineas, '[]') AS lineas,

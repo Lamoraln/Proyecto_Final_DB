@@ -112,6 +112,7 @@ function montarMenu(cuenta) {
   ajustarPantalla();
 }
 
+// Primero comprobamos la sesión y el acceso, luego cargamos el módulo de la pantalla.
 async function iniciar() {
   const cuenta = sesionActual();
 

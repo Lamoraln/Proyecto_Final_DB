@@ -9,7 +9,9 @@ lectura = permitir(*GLOBAL, "RESP_COMPRAS")
 
 @app.get("/api/compras/ordenes")
 def ordenes(cuenta=Depends(lectura)):
+    # Para un usuario limitado a su sede, filtramos por sus almacenes.
     almacenes = almacenes_autorizados(cuenta, db.config)
+    # Agrupamos líneas y recepciones por orden para que la cabecera salga una sola vez.
     return db.consultar("""
         SELECT o.id_orden_compra, o.id_proveedor, o.id_almacen_destino,
                o.fecha_estimada::date, o.estado,

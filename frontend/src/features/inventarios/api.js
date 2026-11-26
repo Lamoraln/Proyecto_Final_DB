@@ -1,6 +1,7 @@
 import { consultar, indiceCatalogo } from '../../shared/api.js';
 
 export async function listarInventario(sedeId) {
+  // Las cantidades vienen de Inventarios; Catálogo aporta nombres y SKU.
   const [existencias, productos, almacenes] = await Promise.all([
     consultar('inventarios?sede_id=' + encodeURIComponent(sedeId)),
     indiceCatalogo('productos', 'id_producto'),
@@ -17,6 +18,7 @@ export async function listarInventario(sedeId) {
       almacen: almacenes.get(registro.id_almacen)?.nombre ?? `Almacén #${registro.id_almacen}`,
     };
   });
+  // Un producto activo sin fila de inventario se muestra como sin registro.
   for (const p of productos.values()) {
     if (p.estado === 'ACTIVO' && !registrados.has(p.id_producto)) {
       filas.push({ nombre: p.nombre, sku: p.sku, categoria: p.categoria ?? '—',

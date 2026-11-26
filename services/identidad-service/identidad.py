@@ -13,6 +13,7 @@ from comun import AUDIENCIA, EMISOR, GLOBAL, RAIZ, ROLES, BaseDatos, permitir, s
 db = BaseDatos(__file__, "db_identidad")
 app = servicio("Identidad y Accesos", db)
 hasher = PasswordHasher()
+# También verificamos un hash cuando el usuario no existe.
 hash_inexistente = hasher.hash("usuario-inexistente")
 ACTIVOS = ("ACTIVO", "ACTIVA")
 administrador = permitir("ADMINISTRADOR")
@@ -37,6 +38,7 @@ def login(datos: Credenciales, respuesta: Response):
         valida = hasher.verify(usuario["password_hash"] if usuario else hash_inexistente, datos.contrasena)
     except (InvalidHashError, VerificationError):
         valida = False
+    # La cuenta y el empleado deben seguir activos para dejarlo entrar.
     if not (
         valida and usuario and usuario["estado"] in ACTIVOS
         and usuario["estado_empleado"] in ACTIVOS and usuario["rol"] in ROLES
@@ -49,6 +51,7 @@ def login(datos: Credenciales, respuesta: Response):
         privada = Path(os.getenv("JWT_PRIVATE_KEY_FILE", RAIZ / ".claves/privada.pem")).read_bytes()
     except OSError as error:
         raise HTTPException(503, "Falta la clave de firma de Identidad.") from error
+    # Los demás servicios usan el rol y la sede del token para validar permisos.
     token = jwt.encode({
         "sub": str(usuario["id_usuario"]), "rol": usuario["rol"], "sede": usuario["id_sede"],
         "exp": vence, "iat": ahora, "iss": EMISOR, "aud": AUDIENCIA,
@@ -60,6 +63,7 @@ def login(datos: Credenciales, respuesta: Response):
     }}
 
 
+# El directorio muestra cuentas y auditoría sin exponer hashes.
 @app.get("/api/identidad/directorio")
 def directorio(_=Depends(administrador)):
     return {
