@@ -1,0 +1,29 @@
+-- Ejecutar en cada base de origen con -v esquema=... y aprovisionar
+-- distribured_reportes con CREATE ROLE si falta. Asignar contraseña vía \password.
+DO $rol$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='distribured_reportes') THEN
+        CREATE ROLE distribured_reportes LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+    END IF;
+END
+$rol$;
+
+SELECT format('GRANT CONNECT ON DATABASE %I TO distribured_reportes',current_database()) \gexec
+GRANT USAGE ON SCHEMA :"esquema" TO distribured_reportes;
+
+-- La lista se limita a las fuentes de reportes y nunca concede acceso a usuarios o hashes.
+WITH fuentes(esquema, tabla, columnas) AS (
+    VALUES ('catalogo','sedes',NULL), ('catalogo','almacenes',NULL),
+           ('catalogo','categorias',NULL), ('catalogo','productos',NULL),
+           ('catalogo','clientes',NULL), ('catalogo','proveedores',NULL),
+           ('compras','ordenes_compra',NULL), ('compras','detalle_orden_compra',NULL),
+           ('compras','recepciones_compra',NULL), ('compras','detalle_recepcion',NULL),
+           ('inventarios','inventarios',NULL), ('inventarios','transferencias',NULL),
+           ('inventarios','detalle_transferencia',NULL), ('ventas','pedidos_venta',NULL),
+           ('ventas','detalle_pedido',NULL), ('ventas','pagos',NULL),
+           ('ventas','devoluciones',NULL), ('ventas','detalle_devolucion',NULL),
+           ('identidad','empleados',' (id_empleado,id_sede,nombre_completo)')
+)
+SELECT format('GRANT SELECT%s ON %I.%I TO distribured_reportes',
+              coalesce(columnas,''),esquema,tabla)
+FROM fuentes WHERE esquema = :'esquema' \gexec

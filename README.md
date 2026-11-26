@@ -22,3 +22,15 @@ El selector ofrece seis perfiles de demostración. La sesión se guarda en la
 pestaña del navegador y los registros provienen de datos de ejemplo incluidos
 en JavaScript. Para autenticar usuarios reales y aplicar permisos de PostgreSQL
 hace falta una API que verifique esos permisos del lado del servidor.
+
+## Entrega de Bases de Datos
+
+La entrega SQL utiliza seis instancias PostgreSQL (una por microservicio) y cuatro sedes
+dentro de Catálogo, incluyendo el centro de distribución. El enunciado requiere
+implementar y verificar la capa de datos. Las pantallas web y las API locales son
+una extensión del proyecto.
+
+- [Instalación y orden de scripts](documents/instalacion-sql.md)
+- [Arquitectura, modelo y permisos](documents/arquitectura-datos.md)
+- [Evidencias de las pruebas](documents/evidencias-sql.md)
+- [Consultas obligatorias](sql/reportes/20_consultas.sql)

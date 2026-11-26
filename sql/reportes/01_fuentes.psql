@@ -1,0 +1,41 @@
+BEGIN;
+
+CREATE EXTENSION IF NOT EXISTS postgres_fdw;
+
+CREATE SCHEMA IF NOT EXISTS reportes;
+
+CREATE SCHEMA IF NOT EXISTS fuentes_reportes;
+
+REVOKE ALL ON SCHEMA fuentes_reportes FROM PUBLIC;
+
+CREATE SERVER distribured_catalogo FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host :'host_catalogo', dbname 'db_catalogo', sslmode 'require', connect_timeout '8');
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER distribured_catalogo OPTIONS (user 'distribured_reportes', password :'clave_catalogo');
+
+IMPORT FOREIGN SCHEMA catalogo LIMIT TO (almacenes, categorias, clientes, productos, sedes, proveedores) FROM SERVER distribured_catalogo INTO fuentes_reportes OPTIONS (import_collate 'false');
+
+CREATE SERVER distribured_compras FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host :'host_compras', dbname 'db_compras', sslmode 'require', connect_timeout '8');
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER distribured_compras OPTIONS (user 'distribured_reportes', password :'clave_compras');
+
+IMPORT FOREIGN SCHEMA compras LIMIT TO (detalle_orden_compra, detalle_recepcion, ordenes_compra, recepciones_compra) FROM SERVER distribured_compras INTO fuentes_reportes OPTIONS (import_collate 'false');
+
+CREATE SERVER distribured_inventario FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host :'host_inventario', dbname 'db_inventario', sslmode 'require', connect_timeout '8');
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER distribured_inventario OPTIONS (user 'distribured_reportes', password :'clave_inventario');
+
+IMPORT FOREIGN SCHEMA inventarios LIMIT TO (detalle_transferencia, inventarios, transferencias) FROM SERVER distribured_inventario INTO fuentes_reportes OPTIONS (import_collate 'false');
+
+CREATE SERVER distribured_ventas FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host :'host_ventas', dbname 'db_ventas', sslmode 'require', connect_timeout '8');
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER distribured_ventas OPTIONS (user 'distribured_reportes', password :'clave_ventas');
+
+IMPORT FOREIGN SCHEMA ventas LIMIT TO (detalle_devolucion, detalle_pedido, devoluciones, pagos, pedidos_venta) FROM SERVER distribured_ventas INTO fuentes_reportes OPTIONS (import_collate 'false');
+
+CREATE SERVER distribured_identidad FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host :'host_identidad', dbname 'db_identidad', sslmode 'require', connect_timeout '8');
+
+CREATE USER MAPPING FOR CURRENT_USER SERVER distribured_identidad OPTIONS (user 'distribured_reportes', password :'clave_identidad');
+
+CREATE FOREIGN TABLE fuentes_reportes.empleados (id_empleado integer, id_sede integer, nombre_completo varchar(150)) SERVER distribured_identidad OPTIONS (schema_name 'identidad', table_name 'empleados');
+
+COMMIT;
