@@ -1,59 +1,61 @@
-import { listarInventario, sedes } from '../inventarios/datos.js';
-import { listarOrdenesCompra } from '../compras/datos.js';
-import { listarPedidosVenta } from '../ventas/datos.js';
-import { montarDirectorio, mostrarErrorConsulta } from '../../shared/directorio.js';
+import {
+  montarDirectorio,
+  mostrarErrorConsulta,
+} from '../../shared/directorio.js';
 
 const contenedor = document.querySelector('#directorio');
 
+async function consultar(recurso) {
+  const respuesta = await fetch(`/api/catalogo/${recurso}`);
+
+  if (!respuesta.ok) {
+    throw new Error(`Catálogo: ${recurso} devolvió HTTP ${respuesta.status}.`);
+  }
+
+  return respuesta.json();
+}
+
 try {
-  const [inventarios, compras, ventas] = await Promise.all([
-    Promise.all(sedes.map(sede => listarInventario(sede.id))),
-    listarOrdenesCompra(),
-    listarPedidosVenta(),
-  ]);
-
-  const productos = [...new Map(
-    inventarios.flat().map(producto => [producto.sku, producto]),
-  ).values()];
-
-  const categorias = [...new Set(productos.map(producto => producto.categoria))];
-  const proveedores = [...new Set(compras.map(orden => orden.proveedor))];
-  const clientes = [...new Set(ventas.map(pedido => pedido.cliente))];
+  const [productos, categorias, proveedores, clientes, sedes, almacenes] =
+    await Promise.all([
+      consultar('productos'),
+      consultar('categorias'),
+      consultar('proveedores'),
+      consultar('clientes'),
+      consultar('sedes'),
+      consultar('almacenes'),
+    ]);
 
   montarDirectorio(contenedor, [
     {
       titulo: 'Productos',
-      columnas: ['SKU', 'Nombre', 'Categoría'],
-      filas: productos.map(p => [p.sku, p.nombre, p.categoria]),
+      columnas: ['SKU', 'Nombre', 'Categoría', 'Estado'],
+      filas: productos.map(p => [p.sku, p.nombre, p.categoria, p.estado]),
     },
     {
       titulo: 'Categorías',
       columnas: ['Categoría', 'Referencias'],
-      filas: categorias.map(categoria => [
-        categoria,
-        productos.filter(p => p.categoria === categoria).length,
-      ]),
+      filas: categorias.map(c => [c.nombre, c.referencias]),
     },
     {
       titulo: 'Proveedores',
-      columnas: ['Proveedor', 'Órdenes de demostración'],
-      filas: proveedores.map(proveedor => [
-        proveedor,
-        compras.filter(orden => orden.proveedor === proveedor).length,
-      ]),
+      columnas: ['Proveedor', 'Ciudad', 'Estado'],
+      filas: proveedores.map(p => [p.razon_social, p.ciudad, p.estado]),
     },
     {
       titulo: 'Clientes',
-      columnas: ['Cliente', 'Pedidos de demostración'],
-      filas: clientes.map(cliente => [
-        cliente,
-        ventas.filter(pedido => pedido.cliente === cliente).length,
-      ]),
+      columnas: ['Cliente', 'Tipo', 'Estado'],
+      filas: clientes.map(c => [c.nombre_completo, c.tipo_cliente, c.estado]),
     },
     {
-      titulo: 'Sedes y almacenes',
-      columnas: ['Sede', 'Almacén'],
-      filas: sedes.map(sede => [sede.nombre, sede.almacen]),
+      titulo: 'Sedes',
+      columnas: ['Código', 'Sede', 'Ciudad', 'Tipo', 'Estado'],
+      filas: sedes.map(s => [s.codigo_sede, s.nombre, s.ciudad, s.tipo_sede, s.estado]),
+    },
+    {
+      titulo: 'Almacenes',
+      columnas: ['Código', 'Almacén', 'Sede', 'Tipo', 'Estado'],
+      filas: almacenes.map(a => [a.codigo_almacen, a.nombre, a.sede, a.tipo_almacen, a.estado]),
     },
   ], 'Catálogo');
 } catch (error) {

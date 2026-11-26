@@ -1,4 +1,5 @@
-import { listarInventario, sedes } from './datos.js';
+import { sedes } from './datos.js';
+import { listarInventario } from './api.js';
 import { clasificar } from './estados.js';
 
 const sede = document.querySelector('#sede');
@@ -76,13 +77,38 @@ function renderizarTabla() {
   }));
 }
 
+let ultimaCarga = 0;
+
 async function cargarSede() {
   const id = Number(sede.value);
-  const registros = await listarInventario(id);
-  if (Number(sede.value) !== id) return;
-  inventario = registros.map(p => ({ ...p, estado: clasificar(p) }));
-  renderizarResumen();
-  renderizarTabla();
+  const carga = ++ultimaCarga;
+
+  inventario = [];
+  resumen.replaceChildren();
+  filas.replaceChildren();
+  conteo.textContent = 'Cargando inventario…';
+
+  try {
+    const registros = await listarInventario(id);
+    if (carga !== ultimaCarga) return;
+
+    inventario = registros.map(producto => ({
+      ...producto,
+      estado: clasificar(producto),
+    }));
+
+    renderizarResumen();
+    renderizarTabla();
+
+    if (inventario.length === 0) {
+      conteo.textContent = 'Esta sede no tiene inventario registrado.';
+    }
+  } catch (error) {
+    if (carga !== ultimaCarga) return;
+
+    console.error('Error al consultar Inventarios', error);
+    conteo.textContent = 'No se pudo consultar Inventarios. Revisa el servicio en el puerto 8002.';
+  }
 }
 
 sede.append(...sedes.map(item => new Option(item.nombre, item.id)));
