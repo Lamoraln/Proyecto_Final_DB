@@ -33,7 +33,7 @@ sql() { "${PSQL[@]}" -d "$1" -f "$2"; }
 
 paso "Crear bases (la instancia debe estar vacía)"
 for esquema in catalogo identidad compras inventarios ventas reportes; do
-    createdb "${BASE[$esquema]}"
+    "${PSQL[@]}" -d postgres -c "CREATE DATABASE ${BASE[$esquema]}"
 done
 
 paso "Roles de grupo"
