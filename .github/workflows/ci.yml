@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas-python:
+    name: Pruebas de servicios (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Ejecutar pruebas
+        run: python -m pytest
+
+  pruebas-sql:
+    name: Instalación y pruebas SQL (PostgreSQL 16)
+    runs-on: ubuntu-24.04
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: ci-distribured
+      REPORTES_CLAVE: ci-reportes-distribured
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar PostgreSQL 16
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-16
+          sudo systemctl start postgresql
+
+      - name: Definir contraseña del superusuario
+        run: sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER USER postgres PASSWORD '${PGPASSWORD}'"
+
+      - name: Comprobar requisitos del FDW de Reportes
+        # postgres_fdw usa sslmode=require y exige contraseña para el lector.
+        run: |
+          test "$(sudo -u postgres psql -tAc 'SHOW ssl')" = on
+          sudo -u postgres psql -tAc "SELECT name FROM pg_available_extensions WHERE name = 'postgres_fdw'" | grep -qx postgres_fdw
+          sudo -u postgres psql -tAc "SELECT type FROM pg_hba_file_rules WHERE database @> '{all}' AND address = '127.0.0.1' AND auth_method = 'scram-sha-256'" | grep -q .
+
+      - name: Instalar y verificar la capa de datos
+        run: bash scripts/verificar_sql.sh

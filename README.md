@@ -33,3 +33,15 @@ una extensión del proyecto.
 - [Arquitectura, modelo y permisos](documents/arquitectura-datos.md)
 - [Evidencias de las pruebas](documents/evidencias-sql.md)
 - [Consultas obligatorias](sql/reportes/20_consultas.sql)
+
+## Pruebas
+
+- Servicios Python: `python -m pip install -r requirements-dev.txt` y después
+  `python -m pytest`. No necesitan PostgreSQL.
+- Capa SQL: `scripts/verificar_sql.sh` instala la entrega en una instancia
+  PostgreSQL vacía y ejecuta `sql/pruebas`. Requiere las variables `PGHOST`,
+  `PGPORT`, `PGUSER`, `PGPASSWORD` (superusuario) y `REPORTES_CLAVE`. La instancia
+  debe aceptar SSL y autenticación scram-sha-256 por TCP, porque el FDW de Reportes
+  lo exige.
+
+GitHub Actions ejecuta ambas partes en `.github/workflows/ci.yml`.
