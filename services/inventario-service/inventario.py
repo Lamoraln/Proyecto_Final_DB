@@ -1,54 +1,57 @@
-import logging
-import os
-from pathlib import Path
+from fastapi import Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
-import psycopg
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-from psycopg.rows import dict_row
+from comun import BaseDatos, GLOBAL, almacenes_autorizados, permitir, servicio
 
-load_dotenv(Path(__file__).resolve().with_name(".env"))
-logger = logging.getLogger(__name__)
-
-app = FastAPI(title="DistribuRed - Inventarios")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8001"],
-    allow_methods=["GET"],
-)
-
-SQL_INVENTARIO = """
-    SELECT id_sede, id_almacen, id_producto,
-           existencia_actual AS existencia,
-           stock_minimo AS minimo
-    FROM inventarios.inventarios
-    WHERE id_sede = %s
-    ORDER BY id_producto, id_almacen
-"""
+db = BaseDatos(__file__, "db_inventario")
+app = servicio("Inventarios y Transferencias", db)
+lectura = permitir(*GLOBAL, "RESP_INVENTARIO")
+escritura = permitir("ADMINISTRADOR", "RESP_INVENTARIO")
 
 
 @app.get("/api/inventarios")
-def listar_inventario(sede_id: int = Query(gt=0)):
-    try:
-        with psycopg.connect(
-            host=os.environ["DB_HOST"],
-            port=os.getenv("DB_PORT", "5432"),
-            dbname=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            sslmode=os.getenv("DB_SSLMODE", "require"),
-            connect_timeout=5,
-            row_factory=dict_row,
-        ) as conexion:
-            return conexion.execute(SQL_INVENTARIO, (sede_id,)).fetchall()
-    except KeyError as error:
-        logger.error("Falta una variable de Inventarios: %s", error)
-        raise HTTPException(500, "Configuración de Inventarios incompleta.") from error
-    except psycopg.OperationalError as error:
-        logger.error("Error de conexión a Inventarios. SQLSTATE=%s", error.sqlstate)
-        raise HTTPException(503, "La base de Inventarios no está disponible.") from error
-    except psycopg.Error as error:
-        logger.error("Falló la consulta de Inventarios. SQLSTATE=%s", error.sqlstate)
-        raise HTTPException(500, "No se pudo consultar el inventario.") from error
+def listar_inventario(sede_id: int = Query(gt=0), cuenta=Depends(lectura)):
+    filas = db.consultar("""
+        SELECT id_sede, id_almacen, id_producto,
+               existencia_actual AS existencia, stock_minimo AS minimo
+        FROM inventarios.inventarios WHERE id_sede = %s
+        ORDER BY id_producto, id_almacen
+    """, (cuenta.alcance(sede_id),))
+    editable = db.config.get("INVENTARIO_ESCRITURA") == "1" and cuenta.rol in ("ADMINISTRADOR", "RESP_INVENTARIO")
+    return [{**fila, "editable": editable} for fila in filas]
+
+
+class Minimo(BaseModel):
+    minimo: int = Field(ge=0, le=2147483647)
+
+
+@app.patch("/api/inventarios/{sede}/{almacen}/{producto}/minimo")
+def actualizar_minimo(sede: int, almacen: int, producto: int, datos: Minimo,
+                      cuenta=Depends(escritura)):
+    if db.config.get("INVENTARIO_ESCRITURA") != "1":
+        raise HTTPException(403, "La escritura de inventario está deshabilitada.")
+    rows = db.consultar("""
+        UPDATE inventarios.inventarios SET stock_minimo = %s, fecha_actualizacion = now()
+        WHERE id_sede = %s AND id_almacen = %s AND id_producto = %s
+        RETURNING stock_minimo AS minimo
+    """, (datos.minimo, cuenta.alcance(sede), almacen, producto))
+    if not rows:
+        raise HTTPException(404, "No existe el registro de inventario solicitado.")
+    return rows[0]
+
+
+@app.get("/api/inventarios/transferencias")
+def transferencias(cuenta=Depends(lectura)):
+    almacenes = almacenes_autorizados(cuenta, db.config)
+    return db.consultar("""
+        SELECT t.id_transferencia, t.id_almacen_origen, t.id_almacen_destino,
+               t.fecha_despacho::date, t.fecha_recepcion::date, t.estado,
+               COALESCE(jsonb_agg(jsonb_build_object(
+                   'id_producto', d.id_producto, 'enviada', d.cantidad_enviada,
+                   'recibida', d.cantidad_recibida
+               ) ORDER BY d.id_producto) FILTER (WHERE d.id_producto IS NOT NULL), '[]') AS productos
+        FROM inventarios.transferencias t
+        LEFT JOIN inventarios.detalle_transferencia d USING (id_transferencia)
+        WHERE %s::int[] IS NULL OR t.id_almacen_origen = ANY(%s) OR t.id_almacen_destino = ANY(%s)
+        GROUP BY t.id_transferencia ORDER BY t.fecha_solicitud DESC, t.id_transferencia DESC
+    """, (almacenes, almacenes, almacenes))

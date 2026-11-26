@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Acceso de demostración | DistribuRed</title>
+    <title>Inicio de sesión | DistribuRed</title>
     <link rel="stylesheet" href="./src/app/styles.css">
     <link rel="stylesheet" href="./src/app/acceso.css">
     <script type="module" src="./src/app/login.js"></script>
@@ -14,13 +14,13 @@
     <main class="login-panel">
         <span class="logo" aria-hidden="true">◆</span>
         <h1>DistribuRed</h1>
-        <p>Elige una cuenta de demostración.</p>
+        <p>Ingresa con tu cuenta de DistribuRed.</p>
         <form id="login-form">
-            <label for="cuenta-demo">Perfil</label>
-            <select id="cuenta-demo" required>
-                <option value="">Selecciona un perfil</option>
-            </select>
-            <button type="submit">Entrar</button>
+            <label for="usuario">Usuario</label>
+            <input id="usuario" autocomplete="username" maxlength="50" required>
+            <label for="contrasena">Contraseña</label>
+            <input id="contrasena" type="password" autocomplete="current-password" maxlength="256" required>
+            <button type="submit">Iniciar sesión</button>
             <p id="login-mensaje" role="alert"></p>
         </form>
     </main>

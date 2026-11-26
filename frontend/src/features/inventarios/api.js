@@ -1,37 +1,35 @@
-const URL_INVENTARIOS = 'http://127.0.0.1:8002/api/inventarios';
-
-async function consultar(url) {
-  const respuesta = await fetch(url);
-
-  if (!respuesta.ok) {
-    const datos = await respuesta.json().catch(() => ({}));
-    throw new Error(datos.detail ?? `La consulta falló con HTTP ${respuesta.status}.`);
-  }
-
-  return respuesta.json();
-}
+import { consultar, indiceCatalogo } from '../../shared/api.js';
 
 export async function listarInventario(sedeId) {
   const [existencias, productos, almacenes] = await Promise.all([
-    consultar(`${URL_INVENTARIOS}?sede_id=${encodeURIComponent(sedeId)}`),
-    consultar('/api/catalogo/productos').catch(() => []),
-    consultar('/api/catalogo/almacenes').catch(() => []),
+    consultar('inventarios?sede_id=' + encodeURIComponent(sedeId)),
+    indiceCatalogo('productos', 'id_producto'),
+    indiceCatalogo('almacenes', 'id_almacen'),
   ]);
-
-  const productosPorId = new Map(productos.map(p => [p.id_producto, p]));
-  const almacenesPorId = new Map(almacenes.map(a => [a.id_almacen, a.nombre]));
-
-  return existencias.map(registro => {
-    const producto = productosPorId.get(registro.id_producto);
-
+  const registrados = new Set(existencias.map(item => item.id_producto));
+  const filas = existencias.map(registro => {
+    const producto = productos.get(registro.id_producto);
     return {
+      ...registro,
       nombre: producto?.nombre ?? `Producto #${registro.id_producto}`,
-      sku: producto?.sku ?? '',
+      sku: producto?.sku ?? String(registro.id_producto),
       categoria: producto?.categoria ?? '—',
-      almacen: almacenesPorId.get(registro.id_almacen)
-        ?? `Almacén #${registro.id_almacen}`,
-      existencia: registro.existencia,
-      minimo: registro.minimo,
+      almacen: almacenes.get(registro.id_almacen)?.nombre ?? `Almacén #${registro.id_almacen}`,
     };
+  });
+  for (const p of productos.values()) {
+    if (p.estado === 'ACTIVO' && !registrados.has(p.id_producto)) {
+      filas.push({ nombre: p.nombre, sku: p.sku, categoria: p.categoria ?? '—',
+        almacen: null, existencia: null, minimo: null });
+    }
+  }
+  return filas;
+}
+
+export function guardarMinimo(fila, minimo) {
+  return consultar(`inventarios/${fila.id_sede}/${fila.id_almacen}/${fila.id_producto}/minimo`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ minimo }),
   });
 }

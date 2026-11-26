@@ -1,6 +1,1 @@
-fastapi
-uvicorn
-psycopg[binary]
-python-dotenv
-argon2-cffi
-PyJWT
+-r ../../requirements.txt

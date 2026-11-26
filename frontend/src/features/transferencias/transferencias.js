@@ -5,10 +5,11 @@ const filtroEstado = document.querySelector('#estado');
 const filtroDestino = document.querySelector('#destino');
 const listado = document.querySelector('#traslados');
 const conteo = document.querySelector('#conteo');
-const sedesPorId = new Map(todasLasSedes.map(sede => [sede.id, sede]));
 
 const estados = {
   EN_TRANSITO: 'En tránsito',
+  SOLICITADA: 'Solicitada',
+  CANCELADA: 'Cancelada',
   RECIBIDA: 'Recibida',
 };
 
@@ -23,11 +24,6 @@ function mostrarFecha(fecha) {
   if (!fecha) return 'Pendiente';
   const [anio, mes, dia] = fecha.split('-');
   return [dia, mes, anio].join('/');
-}
-
-function nombreAlmacen(idSede) {
-  const sede = sedesPorId.get(idSede);
-  return sede ? sede.nombre + ' · ' + sede.almacen : 'Almacén sin identificar';
 }
 
 function crearTabla(traslado) {
@@ -69,7 +65,7 @@ function crearTraslado(traslado) {
 
   texto.append(
     crear('strong', traslado.codigo),
-    crear('small', nombreAlmacen(traslado.origen) + ' → ' + nombreAlmacen(traslado.destino)),
+    crear('small', traslado.origen + ' → ' + traslado.almacenDestino),
   );
 
   const enTransito = traslado.estado === 'EN_TRANSITO';
@@ -133,5 +129,5 @@ try {
   renderizar(transferencias);
 } catch (error) {
   console.error('Error al cargar las transferencias', error);
-  conteo.textContent = 'No se pudieron cargar los traslados.';
+  conteo.textContent = error.message;
 }

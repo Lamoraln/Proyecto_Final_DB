@@ -91,8 +91,8 @@ function crearOrden(orden) {
   const texto = document.createElement('span');
   const sede = sedesPorId.get(orden.sedeId);
   const destino = sede
-    ? sede.nombre + ' · ' + sede.almacen
-    : 'Destino sin identificar';
+    ? sede.nombre + ' · ' + orden.almacen
+    : orden.almacen;
   const estado = estados[orden.estado];
   const fecha = orden.fechaEstimada.split('-').reverse().join('/');
 
@@ -141,5 +141,5 @@ try {
   renderizar(ordenes);
 } catch (error) {
   console.error('Error al cargar las órdenes de compra', error);
-  conteo.textContent = 'No se pudieron cargar las órdenes de compra.';
+  conteo.textContent = error.message;
 }

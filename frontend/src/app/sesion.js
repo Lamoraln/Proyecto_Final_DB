@@ -1,14 +1,3 @@
-export const cuentasDemo = [
-  { id: 'administrador', nombre: 'Administrador', rol: 'ADMINISTRADOR', sedes: null },
-  { id: 'gerencia', nombre: 'Gerencia', rol: 'GERENCIA', sedes: null },
-  { id: 'inventario', nombre: 'Responsable de inventario', rol: 'RESP_INVENTARIO', sedes: [1, 4] },
-  { id: 'compras', nombre: 'Responsable de compras', rol: 'RESP_COMPRAS', sedes: [1, 2] },
-  { id: 'vendedor', nombre: 'Vendedor · Bogotá Sur', rol: 'VENDEDOR', sedes: [2] },
-  { id: 'auditor', nombre: 'Auditor', rol: 'AUDITOR', sedes: null },
-];
-
-const clave = 'distribured.cuenta-demo';
-
 const paginasPorRol = {
   ADMINISTRADOR: [
     'index.html', 'resumen.html', 'transferencias.html', 'compras.html',
@@ -21,17 +10,29 @@ const paginasPorRol = {
   AUDITOR: ['resumen.html'],
 };
 
-export function sesionActual() {
-  const id = sessionStorage.getItem(clave);
-  return cuentasDemo.find(cuenta => cuenta.id === id) ?? null;
+const clave = 'distribured.sesion';
+
+function leerSesion() {
+  try {
+    const sesion = JSON.parse(sessionStorage.getItem(clave));
+    if (sesion?.expira * 1000 > Date.now()) return sesion;
+  } catch {
+    // Volver al formulario si la sesión local está dañada.
+  }
+  cerrarSesion();
+  return null;
 }
 
-export function iniciarSesionDemo(id) {
-  const cuenta = cuentasDemo.find(item => item.id === id);
-  if (!cuenta) return null;
+export function guardarSesion(sesion) {
+  sessionStorage.setItem(clave, JSON.stringify(sesion));
+}
 
-  sessionStorage.setItem(clave, cuenta.id);
-  return cuenta;
+export function sesionActual() {
+  return leerSesion()?.perfil ?? null;
+}
+
+export function tokenActual() {
+  return leerSesion()?.token ?? null;
 }
 
 export function cerrarSesion() {

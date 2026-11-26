@@ -1,5 +1,5 @@
 import { sedes } from './datos.js';
-import { listarInventario } from './api.js';
+import { guardarMinimo, listarInventario } from './api.js';
 import { clasificar } from './estados.js';
 
 const sede = document.querySelector('#sede');
@@ -44,6 +44,36 @@ function renderizarResumen() {
   }));
 }
 
+function celdaMinimo(producto) {
+  const celda = elemento('td', producto.minimo ?? '—', 'number');
+  if (!producto.editable) return celda;
+
+  const boton = elemento('button', 'Editar', 'editar-minimo');
+  boton.type = 'button';
+  boton.setAttribute('aria-label', 'Editar mínimo de ' + producto.nombre);
+  boton.addEventListener('click', async () => {
+    const valor = window.prompt('Nuevo stock mínimo de ' + producto.nombre, producto.minimo);
+    if (valor === null) return;
+    if (!/^\d+$/.test(valor.trim()) || Number(valor) > 2147483647) {
+      conteo.textContent = 'Escribe un mínimo entero no negativo.';
+      return;
+    }
+
+    boton.disabled = true;
+    const carga = ultimaCarga;
+    try {
+      await guardarMinimo(producto, Number(valor));
+      if (carga === ultimaCarga) await cargarSede();
+    } catch (error) {
+      if (carga === ultimaCarga) conteo.textContent = error.message;
+    } finally {
+      boton.disabled = false;
+    }
+  });
+  celda.append(boton);
+  return celda;
+}
+
 function renderizarTabla() {
   const termino = normalizar(buscar.value);
   const visibles = inventario.filter(p =>
@@ -70,7 +100,7 @@ function renderizarTabla() {
     estadoCelda.append(elemento('span', estados[p.estado], 'badge ' + p.estado));
     fila.append(
       producto, elemento('td', p.categoria), elemento('td', p.almacen ?? '—'),
-      elemento('td', p.existencia ?? '—', 'number'), elemento('td', p.minimo ?? '—', 'number'),
+      elemento('td', p.existencia ?? '—', 'number'), celdaMinimo(p),
       estadoCelda,
     );
     return fila;
@@ -89,6 +119,10 @@ async function cargarSede() {
   conteo.textContent = 'Cargando inventario…';
 
   try {
+    if (!id) {
+      conteo.textContent = 'No hay sedes disponibles para tu perfil.';
+      return;
+    }
     const registros = await listarInventario(id);
     if (carga !== ultimaCarga) return;
 
@@ -107,7 +141,7 @@ async function cargarSede() {
     if (carga !== ultimaCarga) return;
 
     console.error('Error al consultar Inventarios', error);
-    conteo.textContent = 'No se pudo consultar Inventarios. Revisa el servicio en el puerto 8002.';
+    conteo.textContent = error.message;
   }
 }
 

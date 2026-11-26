@@ -1,47 +1,27 @@
-import { permiteSede, sesionActual } from '../../app/sesion.js';
-const transferencias = [
-  {
-    codigo: 'TR-001',
-    origen: 4,
-    destino: 2,
-    estado: 'EN_TRANSITO',
-    despacho: '2026-11-24',
-    recepcion: null,
-    productos: [
-      { sku: 'SE-044', nombre: 'Guantes de seguridad', enviada: 30, recibida: null },
-      { sku: 'EM-212', nombre: 'Cinta de embalaje', enviada: 15, recibida: null },
-    ],
-  },
-  {
-    codigo: 'TR-002',
-    origen: 4,
-    destino: 1,
-    estado: 'RECIBIDA',
-    despacho: '2026-11-20',
-    recepcion: '2026-11-21',
-    productos: [
-      { sku: 'OF-119', nombre: 'Etiquetas adhesivas', enviada: 40, recibida: 40 },
-    ],
-  },
-  {
-    codigo: 'TR-003',
-    origen: 1,
-    destino: 3,
-    estado: 'RECIBIDA',
-    despacho: '2026-11-21',
-    recepcion: '2026-11-23',
-    productos: [
-      { sku: 'EM-104', nombre: 'Caja corrugada mediana', enviada: 20, recibida: 17 },
-      { sku: 'SE-046', nombre: 'Gafas de protección', enviada: 10, recibida: 10 },
-    ],
-  },
-];
+import { consultar, indiceCatalogo } from '../../shared/api.js';
 
 export async function listarTransferencias() {
-  const cuenta = sesionActual();
-
-  return transferencias.filter(traslado =>
-    permiteSede(cuenta, traslado.origen) ||
-    permiteSede(cuenta, traslado.destino),
-  );
+  const [traslados, productos, almacenes] = await Promise.all([
+    consultar('inventarios/transferencias'),
+    indiceCatalogo('productos', 'id_producto'),
+    indiceCatalogo('almacenes', 'id_almacen'),
+  ]);
+  function nombreAlmacen(id) {
+    const almacen = almacenes.get(id);
+    return almacen ? `${almacen.sede} · ${almacen.nombre}` : `Almacén #${id}`;
+  }
+  return traslados.map(t => ({
+    codigo: 'TR-' + t.id_transferencia,
+    origen: nombreAlmacen(t.id_almacen_origen),
+    destino: almacenes.get(t.id_almacen_destino)?.id_sede,
+    almacenDestino: nombreAlmacen(t.id_almacen_destino),
+    despacho: t.fecha_despacho,
+    recepcion: t.fecha_recepcion,
+    estado: t.estado,
+    productos: t.productos.map(p => ({
+      ...p,
+      sku: productos.get(p.id_producto)?.sku ?? String(p.id_producto),
+      nombre: productos.get(p.id_producto)?.nombre ?? `Producto #${p.id_producto}`,
+    })),
+  }));
 }

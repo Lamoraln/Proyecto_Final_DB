@@ -1,3 +1,4 @@
+import { consultar } from '../../shared/api.js';
 import {
   montarDirectorio,
   mostrarErrorConsulta,
@@ -5,25 +6,16 @@ import {
 
 const contenedor = document.querySelector('#directorio');
 
-async function consultar(recurso) {
-  const respuesta = await fetch(`/api/catalogo/${recurso}`);
-
-  if (!respuesta.ok) {
-    throw new Error(`Catálogo: ${recurso} devolvió HTTP ${respuesta.status}.`);
-  }
-
-  return respuesta.json();
-}
 
 try {
   const [productos, categorias, proveedores, clientes, sedes, almacenes] =
     await Promise.all([
-      consultar('productos'),
-      consultar('categorias'),
-      consultar('proveedores'),
-      consultar('clientes'),
-      consultar('sedes'),
-      consultar('almacenes'),
+      consultar('catalogo/productos'),
+      consultar('catalogo/categorias'),
+      consultar('catalogo/proveedores'),
+      consultar('catalogo/clientes'),
+      consultar('catalogo/sedes'),
+      consultar('catalogo/almacenes'),
     ]);
 
   montarDirectorio(contenedor, [

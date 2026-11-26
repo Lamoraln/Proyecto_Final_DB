@@ -10,6 +10,7 @@ const secciones = {
   'resumen.html': ['Resumen multisede', '▤', () => Promise.all([
     import('../features/reportes/resumen.js'),
     import('../features/reportes/consolidado.js'),
+    import('../features/reportes/vistas.js'),
   ])],
   'transferencias.html': ['Transferencias', '⇄', () => import('../features/transferencias/transferencias.js')],
   'compras.html': ['Compras', '▣', () => import('../features/compras/compras.js')],
@@ -50,7 +51,7 @@ function montarMenu(cuenta) {
     <a class="brand"><span class="logo" aria-hidden="true">◆</span> DistribuRed</a>
     <nav aria-label="Navegación principal"></nav>
     <div class="sesion-menu">
-      <small>Cuenta de demostración</small>
+      <small>Sesión activa</small>
       <strong class="perfil-activo"></strong>
       <button class="cerrar-sesion" type="button">Cerrar sesión</button>
     </div>

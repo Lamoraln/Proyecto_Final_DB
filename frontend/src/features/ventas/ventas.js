@@ -1,5 +1,5 @@
 import { sedes } from '../inventarios/datos.js';
-import { idsSedesComerciales, listarPedidosVenta } from './datos.js';
+import { listarPedidosVenta } from './datos.js';
 
 const filtroSede = document.querySelector('#sede-venta');
 const filtroEstado = document.querySelector('#estado-venta');
@@ -42,9 +42,7 @@ function etiquetaEstado(estado) {
 }
 
 function calcularImportes(pedido) {
-  const total = pedido.lineas.reduce(
-    (suma, linea) => suma + linea.cantidad * linea.precioUnitario, 0,
-  );
+  const total = pedido.total;
 
   const confirmado = pedido.pagos
     .filter(pago => pago.estado === 'CONFIRMADO')
@@ -171,7 +169,7 @@ function renderizar(pedidos) {
 }
 
 for (const sede of sedes) {
-  if (idsSedesComerciales.includes(sede.id)) {
+  if (sede.tipo !== 'DISTRIBUCION') {
     filtroSede.add(new Option(sede.nombre, sede.id));
   }
 }
@@ -191,5 +189,5 @@ try {
   renderizar(pedidos);
 } catch (error) {
   console.error('Error al cargar los pedidos', error);
-  conteo.textContent = 'No se pudieron cargar los pedidos.';
+  conteo.textContent = error.message;
 }

@@ -1,26 +1,30 @@
-import { cuentasDemo, iniciarSesionDemo, paginaInicio } from './sesion.js';
+import { cerrarSesion, guardarSesion, paginaInicio } from './sesion.js';
+import { consultar } from '../shared/api.js';
 
 const formulario = document.querySelector('#login-form');
-const selector = document.querySelector('#cuenta-demo');
 const mensaje = document.querySelector('#login-mensaje');
+const boton = formulario.querySelector('button[type=submit]');
 
-for (const cuenta of cuentasDemo) {
-  selector.add(new Option(cuenta.nombre, cuenta.id));
-}
-
-formulario.addEventListener('submit', evento => {
+formulario.addEventListener('submit', async evento => {
   evento.preventDefault();
+  mensaje.textContent = '';
+  boton.disabled = true;
+  cerrarSesion();
 
   try {
-    const cuenta = iniciarSesionDemo(selector.value);
-    if (!cuenta) {
-      mensaje.textContent = 'Selecciona un perfil de demostración.';
-      return;
-    }
-
-    location.replace('./' + paginaInicio(cuenta));
+    const sesion = await consultar('identidad/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuario: formulario.querySelector('#usuario').value,
+        contrasena: formulario.querySelector('#contrasena').value,
+      }),
+    });
+    guardarSesion(sesion);
+    location.replace('./' + paginaInicio(sesion.perfil));
   } catch (error) {
-    console.error('Error al guardar la sesión de demostración', error);
-    mensaje.textContent = 'No se pudo guardar la sesión en el navegador.';
+    mensaje.textContent = error.message;
+  } finally {
+    boton.disabled = false;
   }
 });

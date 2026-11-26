@@ -17,7 +17,7 @@
     <div class="workspace">
         <header class="top">
             <span>Operaciones <b>/</b> Resumen multisede</span>
-            <span class="avatar" aria-label="Perfil de demostración">DR</span>
+            <span class="avatar" aria-label="Perfil de usuario">DR</span>
         </header>
         <main hidden>
             <section class="hero">
@@ -59,6 +59,17 @@
                 <div id="tabla-consolidado">
                     <p class="empty" role="status">Cargando consolidado…</p>
                 </div>
+            </section>
+            <section class="panel" aria-labelledby="titulo-vistas">
+                <div class="panel-title"><h2 id="titulo-vistas">Vistas SQL</h2></div>
+                <div class="filters">
+                    <label for="vista-sql">Consulta
+                        <select id="vista-sql">
+                            <option value="">Selecciona una vista</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="resultado-vista" aria-live="polite"></div>
             </section>
         </main>
     </div>

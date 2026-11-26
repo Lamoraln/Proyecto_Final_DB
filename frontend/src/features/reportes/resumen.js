@@ -1,5 +1,5 @@
 import { permitePantalla, sesionActual } from '../../app/sesion.js';
-import { listarInventario, sedes } from '../inventarios/datos.js';
+import { consultar } from '../../shared/api.js';
 import { clasificar } from '../inventarios/estados.js';
 
 const indicadores = document.querySelector('#indicadores');
@@ -75,16 +75,27 @@ function crearFila({ sede, resumen }) {
 
 async function cargarResumen() {
   try {
-    const resultados = await Promise.all(sedes.map(async sede => ({
-      sede,
-      registros: await listarInventario(sede.id),
-    })));
-
-    const total = consolidar(resultados.flatMap(item => item.registros));
-    const resumenPorSede = resultados.map(({ sede, registros }) => ({
-      sede,
-      resumen: consolidar(registros),
-    }));
+    const [inventario, ausencias, sedes] = await Promise.all([
+      consultar('reportes/inventario'), consultar('reportes/ausencias'),
+      consultar('reportes/consolidado'),
+    ]);
+    const ausentesPorSede = new Map(ausencias.map(a => [a.id_sede, a.ausentes]));
+    const porSede = new Map();
+    for (const fila of inventario) {
+      if (!porSede.has(fila.id_sede)) porSede.set(fila.id_sede, []);
+      porSede.get(fila.id_sede).push(fila);
+    }
+    const resumenPorSede = sedes.map(s => {
+      const resumen = consolidar((porSede.get(s.id_sede) ?? []).map(r => ({
+        existencia: r.existencia_actual, minimo: r.stock_minimo,
+      })));
+      resumen.ausente = ausentesPorSede.get(s.id_sede) ?? 0;
+      return { sede: { id: s.id_sede, nombre: s.nombre_sede }, resumen };
+    });
+    const total = resumenPorSede.reduce((acumulado, { resumen }) => {
+      for (const clave of Object.keys(acumulado)) acumulado[clave] += resumen[clave];
+      return acumulado;
+    }, { unidades: 0, bajo: 0, agotado: 0, ausente: 0 });
 
     // Prioriza las sedes con más agotados. Desempata por stock bajo.
     resumenPorSede.sort((a, b) =>
@@ -102,8 +113,8 @@ async function cargarResumen() {
 
     filas.replaceChildren(...resumenPorSede.map(crearFila));
     estadoResumen.textContent = resumenPorSede.length + ' sedes';
-  } catch {
-    estadoResumen.textContent = 'No se pudo cargar el inventario multisede.';
+  } catch (error) {
+    estadoResumen.textContent = error.message;
   }
 }
 

@@ -188,3 +188,8 @@ small{display:block;color:var(--muted);font-weight:400}
 #consolidado-corporativo {
   margin-top: 18px;
 }
+.editar-minimo {
+  margin-inline-start: 0.45rem;
+  min-height: 30px;
+  padding: 4px 8px;
+}

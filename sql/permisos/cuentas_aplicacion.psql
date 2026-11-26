@@ -1,0 +1,34 @@
+-- Ejecutar por instancia después de crear una cuenta PostgreSQL LOGIN dedicada.
+-- Ejemplo: psql -v cuenta=identidad_api -v servicio=identidad -f sql/permisos/cuentas_aplicacion.psql
+-- La cuenta recibe permisos sobre las tablas y columnas que utiliza su API.
+BEGIN;
+SELECT format('GRANT CONNECT ON DATABASE %I TO %I', current_database(), :'cuenta') \gexec
+
+WITH permisos(servicio, esquema, objeto, columnas) AS (
+  VALUES ('catalogo','catalogo','sedes',NULL), ('catalogo','catalogo','almacenes',NULL),
+         ('catalogo','catalogo','categorias',NULL), ('catalogo','catalogo','productos',NULL),
+         ('catalogo','catalogo','proveedores',NULL), ('catalogo','catalogo','clientes',NULL),
+         ('inventarios','inventarios','inventarios',NULL), ('inventarios','inventarios','transferencias',NULL),
+         ('inventarios','inventarios','detalle_transferencia',NULL),
+         ('identidad','identidad','usuarios','(id_usuario,id_empleado,nombre_usuario,password_hash,rol,estado)'),
+         ('identidad','identidad','empleados','(id_empleado,id_sede,nombre_completo,cargo,estado)'),
+         ('identidad','identidad','auditoria_accesos','(id_auditoria,id_usuario,fecha_hora,accion,objeto_consultado,resultado)'),
+         ('compras','compras','ordenes_compra',NULL), ('compras','compras','detalle_orden_compra',NULL),
+         ('compras','compras','recepciones_compra',NULL), ('compras','compras','detalle_recepcion',NULL),
+         ('ventas','ventas','pedidos_venta',NULL), ('ventas','ventas','detalle_pedido',NULL),
+         ('ventas','ventas','pagos',NULL), ('ventas','ventas','devoluciones',NULL),
+         ('ventas','ventas','detalle_devolucion',NULL)
+), conceder AS (
+  SELECT 0 AS orden, format('GRANT USAGE ON SCHEMA %I TO %I', esquema, :'cuenta') AS instruccion
+    FROM permisos WHERE servicio=:'servicio' GROUP BY esquema
+  UNION ALL
+  SELECT 1, format('GRANT SELECT %s ON %I.%I TO %I', coalesce(columnas,''), esquema, objeto, :'cuenta')
+    FROM permisos WHERE servicio=:'servicio'
+  UNION ALL
+  SELECT 0, format('GRANT USAGE ON SCHEMA reportes TO %I', :'cuenta') WHERE :'servicio'='reportes'
+  UNION ALL
+  SELECT 1, format('GRANT SELECT ON reportes.%I TO %I', viewname, :'cuenta')
+    FROM pg_views WHERE :'servicio'='reportes' AND schemaname='reportes' AND viewname ~ '^vista_'
+)
+SELECT instruccion FROM conceder ORDER BY orden \gexec
+COMMIT;

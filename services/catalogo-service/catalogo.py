@@ -1,53 +1,18 @@
-import logging
-import os
-from pathlib import Path
+from fastapi import Depends
 
-import psycopg
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from psycopg.rows import dict_row
+from comun import BaseDatos, permitir, servicio, sesion
 
-CARPETA_SERVICIO = Path(__file__).resolve().parent
-CARPETA_FRONTEND = CARPETA_SERVICIO.parents[1] / "frontend"
-
-load_dotenv(CARPETA_SERVICIO / ".env")
-logger = logging.getLogger(__name__)
-
-app = FastAPI(title="DistribuRed - Catálogo y Terceros")
-
-
-def consultar(sql: str) -> list[dict]:
-    try:
-        with psycopg.connect(
-            host=os.environ["DB_HOST"],
-            port=os.getenv("DB_PORT", "5432"),
-            dbname=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            sslmode=os.getenv("DB_SSLMODE", "require"),
-            connect_timeout=5,
-            row_factory=dict_row,
-        ) as conexion:
-            return conexion.execute(sql).fetchall()
-    except KeyError as error:
-        logger.error("Falta una variable de configuración: %s", error)
-        raise HTTPException(500, "Configuración de Catálogo incompleta.") from error
-    except psycopg.OperationalError as error:
-        logger.error("No se pudo conectar a Catálogo. SQLSTATE=%s", error.sqlstate)
-        raise HTTPException(503, "La base de Catálogo no está disponible.") from error
-    except psycopg.Error as error:
-        logger.error("Falló la consulta de Catálogo. SQLSTATE=%s", error.sqlstate)
-        raise HTTPException(500, "No se pudo ejecutar la consulta de Catálogo.") from error
-
+db = BaseDatos(__file__, "db_catalogo")
+app = servicio("Catálogo y Terceros", db)
+consultar = db.consultar
 
 @app.get("/api/catalogo/conexion")
-def verificar_conexion():
+def verificar_conexion(_=Depends(permitir("ADMINISTRADOR"))):
     return consultar("SELECT current_database() AS base")[0]
 
 
 @app.get("/api/catalogo/sedes")
-def listar_sedes():
+def listar_sedes(_=Depends(sesion)):
     return consultar("""
         SELECT id_sede, codigo_sede, nombre, ciudad, tipo_sede, estado
         FROM catalogo.sedes
@@ -56,7 +21,7 @@ def listar_sedes():
 
 
 @app.get("/api/catalogo/almacenes")
-def listar_almacenes():
+def listar_almacenes(_=Depends(sesion)):
     return consultar("""
         SELECT a.id_almacen, a.codigo_almacen, a.nombre, a.id_sede,
                s.nombre AS sede, a.tipo_almacen, a.estado
@@ -67,7 +32,7 @@ def listar_almacenes():
 
 
 @app.get("/api/catalogo/productos")
-def listar_productos():
+def listar_productos(_=Depends(sesion)):
     return consultar("""
         SELECT p.id_producto, p.sku, p.nombre, c.nombre AS categoria, p.estado
         FROM catalogo.productos AS p
@@ -77,7 +42,7 @@ def listar_productos():
 
 
 @app.get("/api/catalogo/categorias")
-def listar_categorias():
+def listar_categorias(_=Depends(sesion)):
     return consultar("""
         SELECT c.id_categoria, c.nombre, COUNT(p.id_producto) AS referencias
         FROM catalogo.categorias AS c
@@ -88,7 +53,7 @@ def listar_categorias():
 
 
 @app.get("/api/catalogo/proveedores")
-def listar_proveedores():
+def listar_proveedores(_=Depends(permitir("ADMINISTRADOR", "RESP_COMPRAS"))):
     return consultar("""
         SELECT id_proveedor, razon_social, ciudad, estado
         FROM catalogo.proveedores
@@ -97,13 +62,9 @@ def listar_proveedores():
 
 
 @app.get("/api/catalogo/clientes")
-def listar_clientes():
+def listar_clientes(_=Depends(permitir("ADMINISTRADOR", "VENDEDOR"))):
     return consultar("""
         SELECT id_cliente, nombre_completo, tipo_cliente, estado
         FROM catalogo.clientes
         ORDER BY nombre_completo, id_cliente
     """)
-
-
-# Montar después de declarar las rutas de la API.
-app.mount("/", StaticFiles(directory=CARPETA_FRONTEND, html=True), name="frontend")

@@ -1,0 +1,2 @@
+-- Opcional. Ejecutar únicamente en db_inventario con -v cuenta=inventarios_api.
+GRANT UPDATE (stock_minimo, fecha_actualizacion) ON inventarios.inventarios TO :"cuenta";
