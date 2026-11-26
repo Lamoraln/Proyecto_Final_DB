@@ -5,7 +5,7 @@
 1. Crea y activa un entorno virtual en la raíz del proyecto. En Windows, si ya
    tienes `venv`, usa `.\venv\Scripts\python.exe` como intérprete de los comandos.
    Instala las dependencias con `python -m pip install -r requirements.txt`.
-2. Copia cada `services/<carpeta>/.env.example` a `.env` dentro de su propia
+2. Copia cada `services/<carpeta>/.env` a `.env` dentro de su propia
    carpeta y completa `DB_HOST`, `DB_USER` y `DB_PASSWORD` con los de la
    instancia correspondiente. Si conservaste `.env` de Catálogo e Inventarios,
    mantenlos y completa las demás conexiones. En Neon usa SSL y el host de
